@@ -6,7 +6,111 @@
   <title>自動填入助手</title>
 </head>
 <body>
-  <p>Popup placeholder</p>
+  <div class="layout">
+    <nav class="sidebar">
+      <div class="sidebar__title">自動填入助手</div>
+      <ul class="sidebar__nav">
+        <li class="sidebar__item active" data-category="personal">個人資料</li>
+        <li class="sidebar__item" data-category="contact">聯絡方式</li>
+        <li class="sidebar__item" data-category="id">證件</li>
+        <li class="sidebar__item" data-category="address">地址</li>
+        <li class="sidebar__item" data-category="work">工作</li>
+      </ul>
+    </nav>
+    <main class="content">
+      <form id="profile-form">
+        <!-- personal -->
+        <section class="section" data-category="personal">
+          <div class="field">
+            <label>姓名</label>
+            <input type="text" data-key="name" />
+          </div>
+          <div class="field">
+            <label>生日</label>
+            <input type="text" data-key="birthday" placeholder="1990-01-01" />
+          </div>
+        </section>
+
+        <!-- contact -->
+        <section class="section hidden" data-category="contact">
+          <div class="field">
+            <label>手機號碼</label>
+            <input type="text" data-key="phone_mobile" />
+          </div>
+          <div class="field">
+            <label>市話號碼</label>
+            <input type="text" data-key="phone_home" />
+          </div>
+          <div class="field">
+            <label>電子郵件</label>
+            <input type="email" data-key="email" />
+          </div>
+        </section>
+
+        <!-- id -->
+        <section class="section hidden" data-category="id">
+          <div class="field">
+            <label>身分證字號</label>
+            <div class="masked-field">
+              <input type="password" data-key="id_number" />
+              <button type="button" class="btn-toggle" data-target="id_number">顯示</button>
+            </div>
+          </div>
+          <div class="field">
+            <label>台胞證號碼</label>
+            <div class="masked-field">
+              <input type="password" data-key="taiwan_pass" />
+              <button type="button" class="btn-toggle" data-target="taiwan_pass">顯示</button>
+            </div>
+          </div>
+          <div class="field">
+            <label>護照號碼</label>
+            <div class="masked-field">
+              <input type="password" data-key="passport" />
+              <button type="button" class="btn-toggle" data-target="passport">顯示</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- address -->
+        <section class="section hidden" data-category="address">
+          <div class="field">
+            <label>縣市</label>
+            <input type="text" data-key="city" />
+          </div>
+          <div class="field">
+            <label>鄉鎮區</label>
+            <input type="text" data-key="district" />
+          </div>
+          <div class="field">
+            <label>詳細地址</label>
+            <input type="text" data-key="address" />
+          </div>
+          <div class="field">
+            <label>郵遞區號</label>
+            <input type="text" data-key="postal_code" />
+          </div>
+        </section>
+
+        <!-- work -->
+        <section class="section hidden" data-category="work">
+          <div class="field">
+            <label>公司名稱</label>
+            <input type="text" data-key="company" />
+          </div>
+          <div class="field">
+            <label>職稱</label>
+            <input type="text" data-key="job_title" />
+          </div>
+        </section>
+
+        <div class="actions">
+          <button type="submit" class="btn-save">儲存</button>
+          <span class="save-msg hidden" id="save-msg">已儲存</span>
+        </div>
+      </form>
+    </main>
+  </div>
   <script src="popup.js"></script>
 </body>
 </html>

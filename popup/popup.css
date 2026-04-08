@@ -1,0 +1,129 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 13px;
+  color: #111;
+  background: #f9fafb;
+  width: 360px;
+  min-height: 420px;
+}
+
+.layout {
+  display: flex;
+  height: 100%;
+  min-height: 420px;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 96px;
+  background: #1e293b;
+  color: #cbd5e1;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.sidebar__title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  padding: 14px 10px 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.sidebar__nav { list-style: none; flex: 1; }
+
+.sidebar__item {
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  border-left: 3px solid transparent;
+  transition: background 0.1s;
+}
+
+.sidebar__item:hover { background: #334155; }
+.sidebar__item.active {
+  background: #334155;
+  border-left-color: #3b82f6;
+  color: #fff;
+}
+
+/* Content */
+.content {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+  background: #fff;
+}
+
+.section { display: flex; flex-direction: column; gap: 12px; }
+.section.hidden { display: none; }
+
+.field { display: flex; flex-direction: column; gap: 4px; }
+
+.field label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.field input {
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 13px;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.field input:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,0.15); }
+
+.masked-field {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.masked-field input { flex: 1; }
+
+.btn-toggle {
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 5px 8px;
+  font-size: 11px;
+  cursor: pointer;
+  white-space: nowrap;
+  color: #374151;
+}
+
+.btn-toggle:hover { background: #e5e7eb; }
+
+.actions {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.btn-save {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 7px 18px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.btn-save:hover { background: #1d4ed8; }
+
+.save-msg { font-size: 12px; color: #16a34a; }
+.save-msg.hidden { display: none; }
