@@ -210,7 +210,109 @@
   }
 
   function checkNewValue(el) {
-    // Placeholder — implemented in Task 4
+    if (!isTextInput(el)) return;
+    const typedValue = el.value.trim();
+    if (!typedValue) return;
+
+    const fieldDescriptor = {
+      hostname: location.hostname,
+      id: el.id || '',
+      name: el.name || '',
+      placeholder: el.placeholder || '',
+      autocomplete: el.getAttribute('autocomplete') || '',
+    };
+
+    chrome.runtime.sendMessage({ type: 'DETECT_FIELD', field: fieldDescriptor }, (res) => {
+      if (chrome.runtime.lastError) return;
+      if (!res || !res.fieldType) return;
+      if (res.value === typedValue) return; // same as stored, nothing to do
+
+      showMemoryToast(el, res.fieldType, res.label, typedValue);
+    });
+  }
+
+  function showMemoryToast(inputEl, fieldType, label, newValue) {
+    removeBubble();
+
+    const host = document.createElement('div');
+    host.id = '__autofill_bubble__';
+    Object.assign(host.style, {
+      position: 'absolute',
+      zIndex: '2147483647',
+      pointerEvents: 'auto',
+    });
+
+    const shadow = host.attachShadow({ mode: 'closed' });
+
+    const style = document.createElement('style');
+    style.textContent = `
+      .toast {
+        background: #fff;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        padding: 8px 12px;
+        font-family: system-ui, sans-serif;
+        font-size: 13px;
+        color: #111;
+        min-width: 240px;
+      }
+      .toast__title { font-weight: 600; margin-bottom: 4px; }
+      .toast__value { color: #555; margin-bottom: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .toast__actions { display: flex; gap: 8px; justify-content: flex-end; }
+      button { cursor: pointer; border: none; border-radius: 5px; padding: 4px 10px; font-size: 12px; }
+      .btn-save { background: #16a34a; color: #fff; }
+      .btn-save:hover { background: #15803d; }
+      .btn-ignore { background: #f3f4f6; color: #374151; }
+      .btn-ignore:hover { background: #e5e7eb; }
+    `;
+
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+
+    const title = document.createElement('div');
+    title.className = 'toast__title';
+    title.textContent = '要記住這筆資料嗎？';
+
+    const valueEl = document.createElement('div');
+    valueEl.className = 'toast__value';
+    valueEl.textContent = `${label}：${newValue}`;
+
+    const actions = document.createElement('div');
+    actions.className = 'toast__actions';
+
+    const btnSave = document.createElement('button');
+    btnSave.className = 'btn-save';
+    btnSave.textContent = '記住';
+    btnSave.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      chrome.runtime.sendMessage({
+        type: 'SAVE_PROFILE_FIELD',
+        fieldType,
+        value: newValue,
+      });
+      removeBubble();
+    });
+
+    const btnIgnore = document.createElement('button');
+    btnIgnore.className = 'btn-ignore';
+    btnIgnore.textContent = '忽略';
+    btnIgnore.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      removeBubble();
+    });
+
+    actions.appendChild(btnIgnore);
+    actions.appendChild(btnSave);
+    toast.appendChild(title);
+    toast.appendChild(valueEl);
+    toast.appendChild(actions);
+    shadow.appendChild(style);
+    shadow.appendChild(toast);
+    document.body.appendChild(host);
+
+    positionAbove(host, inputEl);
+    activeBubble = host;
   }
 
 })();
