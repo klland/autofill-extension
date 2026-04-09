@@ -19,10 +19,18 @@ function loadAll() {
       if (profile[key] !== undefined) input.value = profile[key];
     });
 
-    // Render emails list
+    // Render emails list (without changing visibility)
     renderEmails(res.emails || []);
 
-    // Render accounts list
+    // Render accounts list (without changing visibility)
+    renderAccounts(res.accounts || {});
+  });
+}
+
+function reloadLists() {
+  chrome.runtime.sendMessage({ type: 'GET_PROFILE' }, (res) => {
+    if (chrome.runtime.lastError || !res) return;
+    renderEmails(res.emails || []);
     renderAccounts(res.accounts || {});
   });
 }
@@ -98,7 +106,7 @@ function setupEmailAdd() {
     if (!email) return;
     chrome.runtime.sendMessage({ type: 'SAVE_EMAIL', email }, () => {
       input.value = '';
-      loadAll();
+      reloadLists();
     });
   });
 
@@ -133,7 +141,7 @@ function renderEmails(emails) {
     del.textContent = '×';
     del.title = '刪除';
     del.addEventListener('click', () => {
-      chrome.runtime.sendMessage({ type: 'DELETE_EMAIL', email }, () => loadAll());
+      chrome.runtime.sendMessage({ type: 'DELETE_EMAIL', email }, () => reloadLists());
     });
 
     li.appendChild(main);
@@ -178,7 +186,7 @@ function renderAccounts(accounts) {
     del.textContent = '×';
     del.title = '刪除';
     del.addEventListener('click', () => {
-      chrome.runtime.sendMessage({ type: 'DELETE_ACCOUNT', hostname }, () => loadAll());
+      chrome.runtime.sendMessage({ type: 'DELETE_ACCOUNT', hostname }, () => reloadLists());
     });
 
     li.appendChild(main);
