@@ -61,6 +61,7 @@ body {
 
 .section { display: flex; flex-direction: column; gap: 12px; }
 .section.hidden { display: none; }
+.hidden { display: none; }
 
 .field { display: flex; flex-direction: column; gap: 4px; }
 

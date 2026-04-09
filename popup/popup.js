@@ -42,8 +42,8 @@ function setupNavigation() {
       // Hide/show profile form actions
       profileActions.classList.toggle('hidden', isSpecial);
 
-      // Show/hide sections
-      document.querySelectorAll('.section[data-category]').forEach((section) => {
+      // Show/hide profile sections (only sections inside the form)
+      document.querySelectorAll('#profile-form .section[data-category]').forEach((section) => {
         section.classList.toggle('hidden', section.dataset.category !== category);
       });
 
