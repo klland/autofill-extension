@@ -127,6 +127,7 @@ function buildRuleKey(hostname, fieldId) {
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === 'DETECT_FIELD') {
+    if (!msg.field) { sendResponse({ fieldType: null, value: null, label: null, allFields: [] }); return true; }
     chrome.storage.local.get(['profile', 'field_rules', 'emails', 'accounts'], (data) => {
       const profile = data.profile || DEFAULT_PROFILE;
       const fieldRules = data.field_rules || {};
@@ -135,7 +136,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       const fieldType = detectFieldType(msg.field, fieldRules);
 
       // Password field: look up stored account for this hostname
-      if (msg.field.inputType === 'password' || msg.field.type === 'password') {
+      if (msg.field.type === 'password') {
         const account = accounts[msg.field.hostname];
         if (account && account.password) {
           sendResponse({
