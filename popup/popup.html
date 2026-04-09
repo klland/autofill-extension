@@ -15,6 +15,8 @@
         <li class="sidebar__item" data-category="id">證件</li>
         <li class="sidebar__item" data-category="address">地址</li>
         <li class="sidebar__item" data-category="work">工作</li>
+        <li class="sidebar__item" data-category="emails">信箱清單</li>
+        <li class="sidebar__item" data-category="accounts">網站帳號</li>
       </ul>
     </nav>
     <main class="content">
@@ -41,10 +43,6 @@
             <label>市話號碼</label>
             <input type="text" data-key="phone_home" />
           </div>
-          <div class="field">
-            <label>電子郵件</label>
-            <input type="email" data-key="email" />
-          </div>
         </section>
 
         <!-- id -->
@@ -64,11 +62,19 @@
             </div>
           </div>
           <div class="field">
+            <label>台胞證到期日</label>
+            <input type="text" data-key="taiwan_pass_expiry" placeholder="2030-01-01" />
+          </div>
+          <div class="field">
             <label>護照號碼</label>
             <div class="masked-field">
               <input type="password" data-key="passport" />
               <button type="button" class="btn-toggle" data-target="passport">顯示</button>
             </div>
+          </div>
+          <div class="field">
+            <label>護照到期日</label>
+            <input type="text" data-key="passport_expiry" placeholder="2030-01-01" />
           </div>
         </section>
 
@@ -104,11 +110,31 @@
           </div>
         </section>
 
-        <div class="actions">
+        <div class="actions" id="profile-actions">
           <button type="submit" class="btn-save">儲存</button>
           <span class="save-msg hidden" id="save-msg">已儲存</span>
         </div>
       </form>
+
+      <!-- emails list (not part of profile form) -->
+      <section class="section hidden" data-category="emails" id="emails-section">
+        <div class="section-header">
+          <span>電子郵件清單</span>
+        </div>
+        <div class="add-row">
+          <input type="email" id="new-email-input" placeholder="新增信箱..." />
+          <button type="button" id="btn-add-email" class="btn-add">新增</button>
+        </div>
+        <ul id="emails-list" class="list"></ul>
+      </section>
+
+      <!-- accounts list -->
+      <section class="section hidden" data-category="accounts" id="accounts-section">
+        <div class="section-header">
+          <span>各網站帳號密碼</span>
+        </div>
+        <ul id="accounts-list" class="list"></ul>
+      </section>
     </main>
   </div>
   <script src="popup.js"></script>

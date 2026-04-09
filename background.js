@@ -4,10 +4,11 @@ const DEFAULT_PROFILE = {
   name: '',
   id_number: '',
   taiwan_pass: '',
+  taiwan_pass_expiry: '',
   passport: '',
+  passport_expiry: '',
   phone_mobile: '',
   phone_home: '',
-  email: '',
   birthday: '',
   city: '',
   district: '',
@@ -21,10 +22,11 @@ const FIELD_LABELS = {
   name: '姓名',
   id_number: '身分證字號',
   taiwan_pass: '台胞證號碼',
+  taiwan_pass_expiry: '台胞證到期日',
   passport: '護照號碼',
+  passport_expiry: '護照到期日',
   phone_mobile: '手機號碼',
   phone_home: '市話號碼',
-  email: '電子郵件',
   birthday: '生日',
   city: '縣市',
   district: '鄉鎮區',
@@ -73,15 +75,13 @@ const AUTOCOMPLETE_MAP = {
   'organization-title': 'job_title',
 };
 
-// Ensure default profile exists in storage on install
+// Ensure default storage exists on install
 chrome.runtime.onInstalled.addListener(() => {
-  chrome.storage.local.get(['profile', 'field_rules'], (data) => {
-    if (!data.profile) {
-      chrome.storage.local.set({ profile: DEFAULT_PROFILE });
-    }
-    if (!data.field_rules) {
-      chrome.storage.local.set({ field_rules: {} });
-    }
+  chrome.storage.local.get(['profile', 'field_rules', 'emails', 'accounts'], (data) => {
+    if (!data.profile) chrome.storage.local.set({ profile: DEFAULT_PROFILE });
+    if (!data.field_rules) chrome.storage.local.set({ field_rules: {} });
+    if (!data.emails) chrome.storage.local.set({ emails: [] });
+    if (!data.accounts) chrome.storage.local.set({ accounts: {} });
   });
 });
 
@@ -127,10 +127,50 @@ function buildRuleKey(hostname, fieldId) {
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === 'DETECT_FIELD') {
-    chrome.storage.local.get(['profile', 'field_rules'], (data) => {
+    chrome.storage.local.get(['profile', 'field_rules', 'emails', 'accounts'], (data) => {
       const profile = data.profile || DEFAULT_PROFILE;
       const fieldRules = data.field_rules || {};
+      const emails = data.emails || [];
+      const accounts = data.accounts || {};
       const fieldType = detectFieldType(msg.field, fieldRules);
+
+      // Password field: look up stored account for this hostname
+      if (msg.field.inputType === 'password' || msg.field.type === 'password') {
+        const account = accounts[msg.field.hostname];
+        if (account && account.password) {
+          sendResponse({
+            fieldType: 'password',
+            value: account.password,
+            label: '密碼',
+            allFields: [],
+            isPassword: true,
+          });
+        } else {
+          sendResponse({ fieldType: null, value: null, label: null, allFields: [] });
+        }
+        return;
+      }
+
+      // Email field: if site has stored account, suggest that email first; else list all emails
+      if (fieldType === 'email') {
+        const account = accounts[msg.field.hostname];
+        const siteEmail = account ? account.email : null;
+        const emailList = siteEmail
+          ? [siteEmail, ...emails.filter(e => e !== siteEmail)]
+          : emails;
+
+        sendResponse({
+          fieldType: 'email',
+          value: emailList[0] || null,
+          label: '電子郵件',
+          allFields: Object.entries(FIELD_LABELS).map(([key, label]) => ({
+            key, label, value: profile[key] || '',
+          })),
+          emailList,
+        });
+        return;
+      }
+
       const value = fieldType ? (profile[fieldType] || null) : null;
       sendResponse({
         fieldType,
@@ -143,7 +183,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         })),
       });
     });
-    return true; // keep channel open for async sendResponse
+    return true;
   }
 
   if (msg.type === 'SAVE_PROFILE_FIELD') {
@@ -166,14 +206,68 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   }
 
   if (msg.type === 'GET_PROFILE') {
-    chrome.storage.local.get('profile', (data) => {
-      sendResponse({ profile: data.profile || DEFAULT_PROFILE, labels: FIELD_LABELS });
+    chrome.storage.local.get(['profile', 'emails', 'accounts'], (data) => {
+      sendResponse({
+        profile: data.profile || DEFAULT_PROFILE,
+        labels: FIELD_LABELS,
+        emails: data.emails || [],
+        accounts: data.accounts || {},
+      });
     });
     return true;
   }
 
   if (msg.type === 'SAVE_PROFILE') {
     chrome.storage.local.set({ profile: msg.profile }, () => sendResponse({ ok: true }));
+    return true;
+  }
+
+  // Save a new email to the emails list
+  if (msg.type === 'SAVE_EMAIL') {
+    chrome.storage.local.get('emails', (data) => {
+      const emails = data.emails || [];
+      if (!emails.includes(msg.email)) {
+        emails.push(msg.email);
+        chrome.storage.local.set({ emails }, () => sendResponse({ ok: true }));
+      } else {
+        sendResponse({ ok: true });
+      }
+    });
+    return true;
+  }
+
+  // Delete an email from the list
+  if (msg.type === 'DELETE_EMAIL') {
+    chrome.storage.local.get('emails', (data) => {
+      const emails = (data.emails || []).filter(e => e !== msg.email);
+      chrome.storage.local.set({ emails }, () => sendResponse({ ok: true }));
+    });
+    return true;
+  }
+
+  // Save account (email + password) for a hostname
+  if (msg.type === 'SAVE_ACCOUNT') {
+    chrome.storage.local.get('accounts', (data) => {
+      const accounts = data.accounts || {};
+      accounts[msg.hostname] = { email: msg.email, password: msg.password };
+      chrome.storage.local.set({ accounts }, () => sendResponse({ ok: true }));
+    });
+    return true;
+  }
+
+  // Delete account for a hostname
+  if (msg.type === 'DELETE_ACCOUNT') {
+    chrome.storage.local.get('accounts', (data) => {
+      const accounts = data.accounts || {};
+      delete accounts[msg.hostname];
+      chrome.storage.local.set({ accounts }, () => sendResponse({ ok: true }));
+    });
+    return true;
+  }
+
+  // Save all emails list (from popup)
+  if (msg.type === 'SAVE_EMAILS') {
+    chrome.storage.local.set({ emails: msg.emails }, () => sendResponse({ ok: true }));
     return true;
   }
 });
