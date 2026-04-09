@@ -6,12 +6,35 @@
   let activeBubble = null;
   let activeField = null;
 
-  // Observe all focus events on input fields
+  // Observe all focus events on input fields (capture phase catches all)
   document.addEventListener('focusin', onFocusIn, true);
   document.addEventListener('focusout', onFocusOut, true);
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') removeBubble();
   });
+
+  // Also bind directly to existing inputs (for SPAs where focusin may miss)
+  function bindInput(el) {
+    if (!isTextInput(el)) return;
+    if (el.__autofillBound) return;
+    el.__autofillBound = true;
+    el.addEventListener('focus', onFocusIn);
+    el.addEventListener('blur', onFocusOut);
+  }
+
+  document.querySelectorAll('input, textarea').forEach(bindInput);
+
+  // Watch for dynamically added inputs (React/Vue SPAs)
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((m) => {
+      m.addedNodes.forEach((node) => {
+        if (node.nodeType !== 1) return;
+        if (node.matches('input, textarea')) bindInput(node);
+        node.querySelectorAll && node.querySelectorAll('input, textarea').forEach(bindInput);
+      });
+    });
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
 
   function onFocusIn(e) {
     const el = e.target;
