@@ -9,29 +9,14 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function loadAll() {
-  chrome.runtime.sendMessage({ type: 'GET_PROFILE' }, (res) => {
-    if (chrome.runtime.lastError || !res) return;
-
-    // Fill profile fields
-    const profile = res.profile;
+  chrome.storage.local.get(['profile', 'emails', 'accounts'], (data) => {
+    const profile = data.profile || {};
     document.querySelectorAll('[data-key]').forEach((input) => {
       const key = input.dataset.key;
       if (profile[key] !== undefined) input.value = profile[key];
     });
-
-    // Render emails list (without changing visibility)
-    renderEmails(res.emails || []);
-
-    // Render accounts list (without changing visibility)
-    renderAccounts(res.accounts || {});
-  });
-}
-
-function reloadLists() {
-  chrome.runtime.sendMessage({ type: 'GET_PROFILE' }, (res) => {
-    if (chrome.runtime.lastError || !res) return;
-    renderEmails(res.emails || []);
-    renderAccounts(res.accounts || {});
+    renderEmails(data.emails || []);
+    renderAccounts(data.accounts || {});
   });
 }
 
@@ -87,8 +72,7 @@ function setupFormSubmit() {
       profile[input.dataset.key] = input.value.trim();
     });
 
-    chrome.runtime.sendMessage({ type: 'SAVE_PROFILE', profile }, (res) => {
-      if (chrome.runtime.lastError || !res?.ok) return;
+    chrome.storage.local.set({ profile }, () => {
       saveMsg.classList.remove('hidden');
       setTimeout(() => saveMsg.classList.add('hidden'), 2000);
     });
@@ -104,9 +88,14 @@ function setupEmailAdd() {
   btn.addEventListener('click', () => {
     const email = input.value.trim();
     if (!email) return;
-    chrome.runtime.sendMessage({ type: 'SAVE_EMAIL', email }, () => {
-      input.value = '';
-      reloadLists();
+    // Read → update → write directly via storage API (bypass message passing)
+    chrome.storage.local.get('emails', (data) => {
+      const emails = data.emails || [];
+      if (!emails.includes(email)) emails.push(email);
+      chrome.storage.local.set({ emails }, () => {
+        input.value = '';
+        renderEmails(emails);
+      });
     });
   });
 
@@ -141,7 +130,10 @@ function renderEmails(emails) {
     del.textContent = '×';
     del.title = '刪除';
     del.addEventListener('click', () => {
-      chrome.runtime.sendMessage({ type: 'DELETE_EMAIL', email }, () => reloadLists());
+      chrome.storage.local.get('emails', (data) => {
+        const emails = (data.emails || []).filter(e => e !== email);
+        chrome.storage.local.set({ emails }, () => renderEmails(emails));
+      });
     });
 
     li.appendChild(main);
@@ -186,7 +178,11 @@ function renderAccounts(accounts) {
     del.textContent = '×';
     del.title = '刪除';
     del.addEventListener('click', () => {
-      chrome.runtime.sendMessage({ type: 'DELETE_ACCOUNT', hostname }, () => reloadLists());
+      chrome.storage.local.get('accounts', (data) => {
+        const accounts = data.accounts || {};
+        delete accounts[hostname];
+        chrome.storage.local.set({ accounts }, () => renderAccounts(accounts));
+      });
     });
 
     li.appendChild(main);
