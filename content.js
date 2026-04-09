@@ -13,13 +13,12 @@
     if (e.key === 'Escape') removeBubble();
   });
 
-  // Also bind directly to existing inputs (for SPAs where focusin may miss)
+  // Also bind directly to existing inputs (focus only, no blur — avoid double-firing)
   function bindInput(el) {
     if (!isTextInput(el)) return;
     if (el.__autofillBound) return;
     el.__autofillBound = true;
     el.addEventListener('focus', onFocusIn);
-    el.addEventListener('blur', onFocusOut);
   }
 
   document.querySelectorAll('input, textarea').forEach(bindInput);
@@ -29,7 +28,7 @@
     mutations.forEach((m) => {
       m.addedNodes.forEach((node) => {
         if (node.nodeType !== 1) return;
-        if (node.matches('input, textarea')) bindInput(node);
+        if (node.matches && node.matches('input, textarea')) bindInput(node);
         node.querySelectorAll && node.querySelectorAll('input, textarea').forEach(bindInput);
       });
     });
